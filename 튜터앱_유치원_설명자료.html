@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>말 선생님 로봇 친구 만들기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gaegu:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sky:#bfe9ff; --sun:#ffd84d; --pink:#ff8fb1; --mint:#7be0b4; --purple:#b69cff; --orange:#ffa94d; --ink:#3b2f5c;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family:"Jua","Gaegu","Malgun Gothic","맑은 고딕","Apple SD Gothic Neo",sans-serif;
+    letter-spacing:.02em;
+    color:var(--ink); background:linear-gradient(#bfe9ff,#e9f9ff 40%,#fff6d6);
+    font-size:22px; line-height:1.6; overflow-x:hidden;
+  }
+  .wrap{max-width:900px;margin:0 auto;padding:16px 16px 80px}
+  /* 떠다니는 구름 */
+  .cloud{position:fixed;top:30px;font-size:60px;opacity:.8;animation:drift 40s linear infinite;pointer-events:none;z-index:0}
+  .cloud.c2{top:110px;font-size:44px;animation-duration:55s;animation-delay:-20s}
+  @keyframes drift{from{left:-100px}to{left:110%}}
+  .wrap{position:relative;z-index:1}
+
+  header{text-align:center;padding:30px 10px 10px}
+  .robot{font-size:110px;display:inline-block;animation:bounce 1.4s ease-in-out infinite;cursor:pointer;user-select:none}
+  @keyframes bounce{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-22px) rotate(4deg)}}
+  h1{font-size:44px;margin:6px 0;line-height:1.2;text-shadow:3px 3px 0 #fff}
+  h1 span{display:inline-block;animation:wiggle 2s ease-in-out infinite}
+  h1 span:nth-child(2n){animation-delay:.3s;color:#ff6f9f}
+  h1 span:nth-child(3n){animation-delay:.6s;color:#4aa8ff}
+  @keyframes wiggle{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg) translateY(-4px)}}
+  .sub{font-size:24px;background:#fff;display:inline-block;padding:6px 20px;border-radius:30px;box-shadow:0 4px 0 rgba(0,0,0,.1)}
+  .hint{font-size:18px;opacity:.7}
+
+  section{background:#fff;border-radius:36px;padding:24px;margin:28px 0;border:5px dashed var(--c,var(--sun));
+          box-shadow:0 8px 0 rgba(0,0,0,.08);animation:pop .6s both}
+  @keyframes pop{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}
+  section h2{margin:0 0 8px;font-size:32px}
+  .num{display:inline-block;background:var(--c,var(--sun));width:52px;height:52px;line-height:52px;text-align:center;border-radius:50%;margin-right:8px;color:#fff;text-shadow:1px 1px 0 rgba(0,0,0,.2)}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:14px}
+  /* 뒤집는 카드 */
+  .flip{perspective:800px;height:200px;cursor:pointer}
+  .flip .in{position:relative;width:100%;height:100%;transition:transform .6s;transform-style:preserve-3d}
+  .flip.on .in{transform:rotateY(180deg)}
+  .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:26px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:12px;box-shadow:0 6px 0 rgba(0,0,0,.12)}
+  .front{background:var(--bg)}
+  .front .e{font-size:60px;animation:bounce 2s ease-in-out infinite}
+  .back{background:#fff;border:4px solid var(--bg);transform:rotateY(180deg);font-size:19px}
+  .tap{font-size:15px;opacity:.7}
+
+  .bubble{background:#fff7d6;border-radius:24px;padding:14px 18px;margin:10px 0;position:relative;border:3px solid var(--sun)}
+  .big{font-size:28px}
+  .steps{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center;margin-top:12px}
+  .step{background:var(--mint);border-radius:20px;padding:10px 16px;text-align:center;box-shadow:0 4px 0 rgba(0,0,0,.12)}
+  .arrow{font-size:30px;animation:nudge 1s infinite}
+  @keyframes nudge{50%{transform:translateX(8px)}}
+
+  /* 퀴즈 */
+  .quiz{text-align:center}
+  .word{font-size:90px;margin:0;line-height:1.1}
+  .ruby{font-size:24px;opacity:.7}
+  .choices{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+  b{font-weight:normal;color:#e0507f}
+  button b{color:inherit}
+  button{font-family:inherit;font:inherit;font-size:26px;border:none;border-radius:24px;padding:16px 8px;background:var(--sky);color:var(--ink);cursor:pointer;box-shadow:0 6px 0 rgba(0,0,0,.15);transition:transform .1s}
+  button:active{transform:translateY(5px);box-shadow:0 1px 0 rgba(0,0,0,.15)}
+  button.right{background:var(--mint);animation:tada .8s}
+  button.wrong{background:#ffc2c2;animation:shake .4s}
+  @keyframes tada{0%,100%{transform:scale(1)}30%{transform:scale(1.2) rotate(-4deg)}60%{transform:scale(1.2) rotate(4deg)}}
+  @keyframes shake{25%{transform:translateX(-10px)}75%{transform:translateX(10px)}}
+  #msg{min-height:42px;font-size:28px;margin-top:12px}
+  .score{display:flex;justify-content:center;gap:8px;font-size:40px}
+  .next{background:var(--sun);margin-top:12px}
+
+  footer{text-align:center;font-size:30px;margin-top:30px}
+  .confetti{position:fixed;top:-30px;font-size:34px;pointer-events:none;z-index:99;animation:fall 2.6s ease-in forwards}
+  @keyframes fall{to{transform:translateY(110vh) rotate(540deg);opacity:.8}}
+  @media(max-width:600px){h1{font-size:34px}.word{font-size:70px}body{font-size:20px}}
+</style>
+</head>
+<body>
+<div class="cloud">☁️</div><div class="cloud c2">☁️</div>
+
+<div class="wrap">
+
+<header>
+  <div class="robot" id="robot" title="눌러봐!">🤖</div>
+  <h1><span>말</span> <span>선</span><span>생</span><span>님</span> <span>로</span><span>봇</span> <span>친</span><span>구</span></h1>
+  <div class="sub">🌍 다른 나라 말을 배워요! 🇯🇵 🇺🇸</div>
+  <p class="hint">👆 로봇을 눌러 보고, 카드도 눌러 보세요!</p>
+</header>
+
+<!-- 1 -->
+<section style="--c:#ffa94d">
+  <h2><span class="num">1</span>무엇을 만들까요?</h2>
+  <div class="bubble big">
+    어떤 어른이 <b>나만의 말 선생님 로봇 친구</b>를 만들고 싶대요! 🤖💕
+  </div>
+  <div class="grid">
+    <div class="flip" onclick="this.classList.toggle('on')" style="--bg:#ffe0b3"><div class="in">
+      <div class="face front"><div class="e">🇯🇵</div><b>일본 말</b><span class="tap">눌러 봐요 👆</span></div>
+      <div class="face back">일본 친구들은<br><b>"안녕"</b>을<br><b>"こんにちは"</b>라고 해요!</div></div></div>
+    <div class="flip" onclick="this.classList.toggle('on')" style="--bg:#d4ecff"><div class="in">
+      <div class="face front"><div class="e">🇺🇸</div><b>영어</b><span class="tap">눌러 봐요 👆</span></div>
+      <div class="face back">영어 친구들은<br><b>"안녕"</b>을<br><b>"Hello!"</b>라고 해요!</div></div></div>
+    <div class="flip" onclick="this.classList.toggle('on')" style="--bg:#ffd0e0"><div class="in">
+      <div class="face front"><div class="e">📅</div><b>얼마나?</b><span class="tap">눌러 봐요 👆</span></div>
+      <div class="face back"><b>4주</b> 안에 만들어요!<br>하루 <b>15~20분</b>만<br>공부해요 ⏰</div></div></div>
+  </div>
+  <div class="bubble" style="margin-top:16px">
+    🚌 어른이 <b>회사 갈 때, 집에 올 때</b> 조금씩 조금씩 공부하면 말이 쑥쑥 늘어요!<br>
+    🎯 나한테 딱 맞는 공부를 해서 <b>재미있게</b> 배울 수 있어요.
+  </div>
+</section>
+
+<!-- 2 -->
+<section style="--c:#7be0b4">
+  <h2><span class="num" style="background:#7be0b4">2</span>로봇 친구는 뭘 할 수 있어요?</h2>
+  <p>마법 같은 <b>다섯 가지 힘</b>이 있어요! ✨ 카드를 눌러 보세요.</p>
+  <div class="grid">
+    <div class="flip" onclick="this.classList.toggle('on')" style="--bg:#ffe28a"><div class="in">
+      <div class="face front"><div class="e">🎭</div><b>역할 놀이</b><span class="tap">⭐⭐⭐ 제일 중요!</span></div>
+      <div class="face back">식당 놀이, 여행 놀이처럼<br>로봇이랑 <b>대화 놀이</b>를 해요.<br>틀리면 바로 알려줘요! 🍽️✈️</div></div></div>
+    <div class="flip" onclick="this.classList.toggle('on')" style="--bg:#ffc2d6"><div class="in">
+      <div class="face front"><div class="e">✏️</div><b>글짓기 고치기</b><span class="tap">⭐⭐⭐ 제일 중요!</span></div>
+      <div class="face back">내가 쓴 글을<br><b>더 멋지게</b> 고쳐 주고<br>왜 그런지도 알려줘요! 💡</div></div></div>
+    <div class="flip" onclick="this.classList.toggle('on')" style="--bg:#c9f2e0"><div class="in">
+      <div class="face front"><div class="e">📒</div><b>나만의 단어장</b><span class="tap">⭐⭐</span></div>
+      <div class="face back">새로 배운 말을<br><b>저절로 모아 줘요.</b><br>보물 상자처럼요! 💎</div></div></div>
+    <div class="flip" onclick="this.classList.toggle('on')" style="--bg:#d9ccff"><div class="in">
+      <div class="face front"><div class="e">🎮</div><b>복습 퀴즈</b><span class="tap">⭐⭐</span></div>
+      <div class="face back">틀린 말만 모아서<br>매일 <b>5문제</b> 풀어요.<br>다시 하면 쏙쏙 기억나요! 🧠</div></div></div>
+    <div class="flip" onclick="this.classList.toggle('on')" style="--bg:#bfe9ff"><div class="in">
+      <div class="face front"><div class="e">🎧</div><b>소리 연습</b><span class="tap">⭐</span></div>
+      <div class="face back">오고 가는 길에<br><b>듣고 따라 말해요.</b><br>노래처럼요! 🎵</div></div></div>
+  </div>
+</section>
+
+<!-- 3 -->
+<section style="--c:#b69cff">
+  <h2><span class="num" style="background:#b69cff">3</span>로봇 친구는 어떻게 만들어요?</h2>
+  <p>Claude(클로드)라는 똑똑한 <b>AI 친구</b>가 도와줘요. 🧠✨<br>코딩(어려운 컴퓨터 글자 쓰기)은 하나도 안 해도 돼요!</p>
+  <div class="grid">
+    <div class="flip" onclick="this.classList.toggle('on')" style="--bg:#e5dcff"><div class="in">
+      <div class="face front"><div class="e">👩‍🏫</div><b>선생님 정하기</b></div>
+      <div class="face back">"나는 일본어 초보야.<br>쉽게 알려 줘!"<br>하고 <b>부탁</b>해요 🙏</div></div></div>
+    <div class="flip" onclick="this.classList.toggle('on')" style="--bg:#ffe3b3"><div class="in">
+      <div class="face front"><div class="e">📱</div><b>퀴즈 앱 만들기</b></div>
+      <div class="face back">"단어 퀴즈 만들어 줘!"<br>하면 <b>휴대폰에서</b><br>게임처럼 할 수 있어요 🎉</div></div></div>
+    <div class="flip" onclick="this.classList.toggle('on')" style="--bg:#c9f2e0"><div class="in">
+      <div class="face front"><div class="e">🗣️</div><b>목소리로 말하기</b></div>
+      <div class="face back">입으로 말하고<br>귀로 듣는<br><b>대화 연습</b>을 해요 👂</div></div></div>
+    <div class="flip" onclick="this.classList.toggle('on')" style="--bg:#ffd0e0"><div class="in">
+      <div class="face front"><div class="e">🐘</div><b>기억하기</b></div>
+      <div class="face back">코끼리처럼<br><b>내가 잘 틀리는 것</b>을<br>기억해 줘요! 💭</div></div></div>
+  </div>
+  <div class="bubble" style="margin-top:16px">
+    💬 <b>로봇 선생님에게 하는 말</b><br>
+    "나는 일본어를 처음 배워. 하루 15분 공부할 거야.<br>
+    끝나면 <b>틀린 말 3개</b>를 알려 줘. 내일 또 만나면 그걸 다시 물어봐 줘!"
+  </div>
+</section>
+
+<!-- 4 -->
+<section style="--c:#ff8fb1">
+  <h2><span class="num" style="background:#ff8fb1">4</span>짜잔! 완성된 게임이에요 🎉</h2>
+  <p>일본 말 <b>단어 퀴즈 게임</b>이 만들어졌어요!</p>
+  <div class="steps">
+    <div class="step">🌱 쉬운 말<br><b>60개</b></div><div class="arrow">➕</div>
+    <div class="step">🌳 조금 어려운 말<br><b>60개</b></div><div class="arrow">➡️</div>
+    <div class="step" style="background:var(--sun)">🎮 한 번에<br><b>10문제</b></div>
+  </div>
+  <div class="bubble" style="margin-top:16px">
+    ✅ 맞히면 <b>짝짝짝!</b> 👏 &nbsp; ❌ 틀려도 <b>괜찮아요!</b> 로봇이 다시 알려 줘요.<br>
+    🔁 틀린 것만 <b>모아서 한 번 더</b> 풀 수 있어요.
+  </div>
+
+  <h3 style="text-align:center">👇 우리도 한번 해 볼까요? 👇</h3>
+  <div class="quiz">
+    <div class="score" id="score">⚪⚪⚪</div>
+    <div class="ruby" id="ruby"></div>
+    <p class="word" id="word"></p>
+    <div id="q" style="font-size:24px">이 말은 무슨 뜻일까요?</div>
+    <div class="choices" id="choices"></div>
+    <div id="msg"></div>
+    <button class="next" id="next" style="display:none">다음 문제 ▶</button>
+  </div>
+</section>
+
+<footer>
+  🌈 오늘도 <b>조금씩</b> 배우면<br>누구나 <b>말 박사</b>가 될 수 있어요! 🎓<br>
+  <span style="font-size:50px">🐻🐰🐥🦊</span>
+</footer>
+</div>
+
+<script>
+  function confetti(n){
+    var em=['🎉','⭐','🌈','💖','🎈','✨','🍭'];
+    for(var i=0;i<(n||24);i++){
+      var d=document.createElement('div');d.className='confetti';
+      d.textContent=em[Math.floor(Math.random()*em.length)];
+      d.style.left=Math.random()*100+'vw';
+      d.style.animationDelay=(Math.random()*.8)+'s';
+      document.body.appendChild(d);
+      setTimeout(function(x){x.remove()},3600,d);
+    }
+  }
+  document.getElementById('robot').onclick=function(){
+    confetti(30);
+    this.textContent=['🤖','😄','🥳','🤩'][Math.floor(Math.random()*4)];
+  };
+
+  // 작은 퀴즈
+  var Q=[
+    {w:'住所',r:'じゅうしょ',a:'주소',o:['습관','주소','예약','통근·출퇴근']},
+    {w:'こんにちは',r:'',a:'안녕하세요',o:['안녕하세요','고마워요','잘 가요','미안해요']},
+    {w:'ありがとう',r:'',a:'고마워요',o:['배고파요','고마워요','졸려요','안녕하세요']}
+  ];
+  var idx=0, got=0, lock=false;
+  function show(){
+    lock=false;
+    var q=Q[idx];
+    document.getElementById('word').textContent=q.w;
+    document.getElementById('ruby').textContent=q.r;
+    document.getElementById('msg').textContent='';
+    document.getElementById('next').style.display='none';
+    var c=document.getElementById('choices');c.innerHTML='';
+    q.o.forEach(function(t){
+      var b=document.createElement('button');b.textContent=t;
+      b.onclick=function(){
+        if(lock)return;
+        if(t===q.a){
+          lock=true;b.className='right';got++;
+          document.getElementById('msg').textContent='🎉 우와! 정답이에요!';
+          confetti(20);
+          finish();
+        }else{
+          b.className='wrong';
+          document.getElementById('msg').textContent='😊 괜찮아요! 다시 눌러 봐요!';
+        }
+      };
+      c.appendChild(b);
+    });
+    var s='';for(var i=0;i<Q.length;i++)s+=i<idx?'🌟':'⚪';
+    document.getElementById('score').textContent=s;
+  }
+  function finish(){
+    var s='';for(var i=0;i<Q.length;i++)s+=i<=idx?'🌟':'⚪';
+    document.getElementById('score').textContent=s;
+    var n=document.getElementById('next');n.style.display='inline-block';
+    if(idx===Q.length-1){
+      n.textContent='🔄 처음부터 다시!';
+      document.getElementById('msg').textContent='🏆 모두 맞혔어요! 말 박사님!';
+      confetti(50);
+    }else n.textContent='다음 문제 ▶';
+  }
+  document.getElementById('next').onclick=function(){
+    idx=(idx+1)%Q.length; show();
+  };
+  show();
+</script>
+</body>
+</html>
